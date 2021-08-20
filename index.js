@@ -21,22 +21,55 @@ dbConnection.connect(err => {
   promptStarter();
 });
 
-// set up the prompt function to have a specific question needed 
+// set up the prompt function to have a specific question needed
 const promptStarter = () => {
-  inquirer.prompt([
-    {
-      type: "list",
-      message: "What would you like to do?",
-      name: "choice",
-      choices: [
-        "View All Employees?",
-        "Add Employee?",
-        "Update Employee Role",
-        "View All Roles?",
-        "Add Role?",
-        "View all Departments",
-        "Add Department?",
-      ],
-    },
-  ]);
+  inquirer
+    .prompt([
+      {
+        type: "list",
+        message: "What would you like to do?",
+        name: "choice",
+        choices: [
+          "View All Employees?",
+          "Add Employee?",
+          "Update Employee Role",
+          "View All Roles?",
+          "Add Role?",
+          "View all Departments",
+          "Add Department?",
+        ],
+      },
+    ])
+    .then(value => {
+        // check if the question matches then call the function
+      switch (value.choice) {
+        case "View All Employees?":
+          viewAllEmployees();
+          break;
+
+        case "Add Employee?":
+          addEmployee();
+          break;
+
+        case "Update Employee Role":
+          updateEmployeeRole();
+          break;
+
+        case "View All Roles?":
+          viewAllRoles();
+          break;
+
+        case "Add Role?":
+          addRole();
+          break;
+
+        case "View all Departments":
+          viewAllDepartments();
+          break;
+
+        case "Add Department?":
+          addDepartment();
+          break;
+      }
+    });
 };
