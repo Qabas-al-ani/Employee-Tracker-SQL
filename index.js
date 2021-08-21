@@ -89,18 +89,26 @@ function viewAllEmployees() {
   );
 }
 
-// // [
-//   "Sales lead",
-//   "Salesperson",
-//   "Lead Engineer",
-//   "Software Engineer",
-//   "Account Manager",
-//   "Accountant",
-//   "Legal Team Lead",
-// ]
-
 // added the prompt to add employee
 function addEmployee() {
+  let managerArray = [];
+  let roleArray = [];
+
+  dbConnection.query(
+    "SELECT first_name, last_name FROM employee WHERE manager_id IS NULL",
+    (err, results) => {
+      results.map(manager =>
+        managerArray.push(`${manager.first_name} ${manager.last_name}`)
+      );
+      return managerArray;
+    }
+  );
+
+  dbConnection.query("SELECT * FROM role ", (err, results) => {
+    if (err) throw err;
+    results.map(role => roleArray.push(`${role.title}`));
+    return roleArray;
+  });
   inquirer
     .prompt([
       {
@@ -117,58 +125,75 @@ function addEmployee() {
         type: "rawlist",
         message: "what is the employee's role?",
         name: "role",
-        choices: selectRole(),
+        choices: roleArray,
       },
       {
         name: "manager",
         message: "What is their manager's name?",
         type: "rawlist",
-        choices: selectManager(),
+        choices: managerArray,
       },
     ])
     .then(results => {
       // created a const for role_id so i can connect to tables in the same function
-      const role_id = selectRole().indexOf(results.role) + 1;
-      const manager_id = selectManager().indexOf(results.manager) + 1;
-    
+      const role_id = roleArray.indexOf(results.role) + 1;
+      const manager_id = managerArray.indexOf(results.manager) + 1;
+
+      const newEmployee = {
+        first_name: results.first_name,
+        last_name: results.last_name,
+        manager_id: manager_id,
+        role_id: role_id,
+      };
+
+      dbConnection.query("INSERT INTO employee SET ?", newEmployee, err => {
+        if (err) throw err;
+        console.table(results);
+        promptStarter();
+      });
     });
 }
 
-const roleArray = [];
-function selectRole() {
+// dbConnection.query(
+//   "SELECT employee.first_name, employee.last_name, role.title FROM employee JOIN role ON employee.role_id = role.id",
+//   (err, results) => {
+//     if (err) throw err;
+
+function updateEmployeeRole() {
+  
+  let employeeArray = [];
+  let roleArray = [];
+
+
+
+
+
+
   dbConnection.query("SELECT * FROM role ", (err, results) => {
     if (err) throw err;
     results.map(role => roleArray.push(`${role.title}`));
     return roleArray;
   });
+
+
+  inquirer.prompt([
+    {
+      name: "employeeName",
+      type: "rawList",
+      choices: () => {
+        const employeeNames = [];
+        results.map(employee =>
+          employeeNames.push(`${employee.first_name} ${employee.last_name}`)
+        );
+        return employeeNames;
+      },
+      message: "which employee's role do you want to update?",
+    },
+    {
+      name: "role",
+      type: "rawList",
+      message: "what is the employee's new title?",
+      choices: rol,
+    },
+  ]);
 }
-
-// function updateEmployeeRole () {
-//   dbConnection.query(
-//     "SELECT employee.first_name, employee.last_name, role.title FROM employee JOIN role ON employee.role_id = role.id",
-//     (err, results) => {
-//       if (err) throw err;
-
-//       inquirer.prompt([
-//         {
-//           name: "employeeName",
-//           type: "rawList",
-//           choices: () => {
-//             const employeeNames = [];
-//             results.map(employee =>
-//               employeeNames.push(`${employee.first_name} ${employee.last_name}`)
-//             );
-//             return employeeNames;
-//           },
-//           message: "which employee's role do you want to update?",
-//         },
-//         {
-//           name: "role",
-//           type: "rawList",
-//           message: "what is the employee's new title?",
-//           choices: selectRole(),
-//         },
-//       ]);
-//     }
-//   );
-// };
