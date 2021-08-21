@@ -2,6 +2,7 @@
 const inquirer = require("inquirer");
 const mysql = require("mysql2");
 const consoleTable = require("console.table");
+const promisemysql = require("promise-mysql");
 
 // create connection to the local database
 const dbConnection = mysql.createConnection({
@@ -22,7 +23,7 @@ dbConnection.connect(err => {
 });
 
 // set up the prompt function to have a specific question needed
-const promptStarter = () => {
+function promptStarter() {
   inquirer
     .prompt([
       {
@@ -72,13 +73,12 @@ const promptStarter = () => {
           break;
       }
     });
-};
+}
 
-
-// added employee function that will be call the errors if found or results 
-const viewAllEmployees = () => {
+// added employee function that will be call the errors if found or results
+function viewAllEmployees() {
   dbConnection.query(
-    'SELECT employee.id, employee.first_name, employee.last_name, role.title, role.salary, department.name, CONCAT(employee.first_name, " ", employee.last_name) AS manager FROM employee ',
+    "SELECT employee.id, employee.first_name, employee.last_name, role.title, department.name AS department, role.salary, CONCAT(e.first_name, ' ' ,e.last_name) AS manager FROM employee INNER JOIN role on role.id = employee.role_id INNER JOIN department on department.id = role.department_id left join employee e on employee.manager_id = e.id;",
     (err, results) => {
       if (err) {
         throw err;
@@ -87,11 +87,20 @@ const viewAllEmployees = () => {
       promptStarter();
     }
   );
-};
+}
 
+// // [
+//   "Sales lead",
+//   "Salesperson",
+//   "Lead Engineer",
+//   "Software Engineer",
+//   "Account Manager",
+//   "Accountant",
+//   "Legal Team Lead",
+// ]
 
 // added the prompt to add employee
-const addEmployee = () => {
+function addEmployee() {
   inquirer
     .prompt([
       {
@@ -105,30 +114,61 @@ const addEmployee = () => {
         name: "last_name",
       },
       {
-        type: "list",
+        type: "rawlist",
         message: "what is the employee's role?",
         name: "role",
-        choices: [
-          "Sales lead",
-          "Salesperson",
-          "Lead Engineer",
-          "Software Engineer",
-          "Account Manager",
-          "Accountant",
-          "Legal Team Lead",
-        ],
+        choices: selectRole(),
+      },
+      {
+        name: "manager",
+        message: "What is their manager's name?",
+        type: "rawlist",
+        choices: selectManager(),
       },
     ])
     .then(results => {
-        // created a const for role_id so i can connect to tables in the same function
-    const role_id;
-    dbConnection.query(`SELECT department_id FROM role WHERE ${results.role} = role.title`, (err, result ) => {
-        role_id = result;
-    })
-
-      dbConnection.query(`INSERT INTO employee
-      (first_name, last_name, role_id, manager_id)
-      VALUES
-      (${employee.first_name}, ${employee.last_name}, ${role_id}, NULL)`);
+      // created a const for role_id so i can connect to tables in the same function
+      const role_id = selectRole().indexOf(results.role) + 1;
+      const manager_id = selectManager().indexOf(results.manager) + 1;
+    
     });
-};
+}
+
+const roleArray = [];
+function selectRole() {
+  dbConnection.query("SELECT * FROM role ", (err, results) => {
+    if (err) throw err;
+    results.map(role => roleArray.push(`${role.title}`));
+    return roleArray;
+  });
+}
+
+// function updateEmployeeRole () {
+//   dbConnection.query(
+//     "SELECT employee.first_name, employee.last_name, role.title FROM employee JOIN role ON employee.role_id = role.id",
+//     (err, results) => {
+//       if (err) throw err;
+
+//       inquirer.prompt([
+//         {
+//           name: "employeeName",
+//           type: "rawList",
+//           choices: () => {
+//             const employeeNames = [];
+//             results.map(employee =>
+//               employeeNames.push(`${employee.first_name} ${employee.last_name}`)
+//             );
+//             return employeeNames;
+//           },
+//           message: "which employee's role do you want to update?",
+//         },
+//         {
+//           name: "role",
+//           type: "rawList",
+//           message: "what is the employee's new title?",
+//           choices: selectRole(),
+//         },
+//       ]);
+//     }
+//   );
+// };
