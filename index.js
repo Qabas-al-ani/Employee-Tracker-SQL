@@ -4,14 +4,16 @@ const mysql = require("mysql2");
 const consoleTable = require("console.table");
 const promisemysql = require("promise-mysql");
 
-// create connection to the local database
-const dbConnection = mysql.createConnection({
+const connectionProperties = {
   host: "localhost",
   port: 3306,
   user: "root",
   password: "0000",
   database: "employee_db",
-});
+};
+
+// create connection to the local database
+const dbConnection = mysql.createConnection(connectionProperties);
 
 // set up the data base connection to show if there is an err or not and fire the prompStarter function
 dbConnection.connect(err => {
@@ -158,49 +160,62 @@ function updateEmployeeRole() {
   let employeeArray = [];
   let roleArray = [];
 
-  dbConnection.query(
-    "SELECT first_name, last_name FROM employee;",
+  promisemysql
+    .createConnection(connectionProperties)
+    .then(conn => {
+      return Promise.all([
+        conn.query("SELECT id, title FROM role ORDER BY title ASC"),
+        conn.query(
+          "SELECT employee.id, concat(employee.first_name, ' ' ,  employee.last_name) AS Employee FROM employee ORDER BY Employee ASC"
+        ),
+      ]);
+    })
+    .then(([roles, employees]) => {
+      roles.map(role => roleArray.push(role.title));
 
-    (err, results) => {
-      results.map(employee => {
-       
-        employeeArray.push(`${employee.first_name} ${employee.last_name}`);
-      });
-     
-      return employeeArray;
-    }
-  );
+      employees.map(employee => employeeArray.push(employee.Employee));
 
-  dbConnection.query("SELECT * FROM role ", (err, results) => {
-    if (err) throw err;
-    results.map(role => roleArray.push(`${role.title}`));
-    return roleArray;
-  });
-  console.log(employeeArray);
-  inquirer
-    .prompt([
-      {
-        name: "employeeName",
-        type: "rawList",
-        choices: employeeArray,
-        message: "which employee's role do you want to update?",
-      },
-      {
-        name: "role",
-        type: "rawList",
-        message: "which role do you want to assign the selected employee?",
-        choices: roleArray,
-      },
-    ])
-    .then(([role, employeeName]) => {
-      let last_name = employeeName.split(" ")[0];
-      dbConnection.query(
-        `UPDATE employee SET role = ${role} WHERE last_name = ${last_name}`,
-        err => {
-          if (err) throw err;
+      return Promise.all([roles, employees]);
+    })
+    .then(([roles, employees]) => {
+      inquirer
+        .prompt([
+          {
+            name: "employee",
+            type: "list",
+            message: "which employee's role do you want to update?",
+            choices: employeeArray,
+          },
+          {
+            name: "role",
+            type: "list",
+            message: "which role do you want to assign the selected employee?",
+            choices: roleArray,
+          },
+        ])
+        .then(results => {
+          let role_id;
+          let employee_id;
 
-          promptStarter();
-        }
-      );
+          for (let i = 0; i < roles.length; i++) {
+            if (results.role == roles[i].title) {
+              role_id = roles[i].id;
+            }
+          }
+
+          for (let i = 0; i < employees.length; i++) {
+            if (results.employee == employees[i].Employee) {
+              employee_id = employees[i].id;
+            }
+          }
+
+          dbConnection.query(
+            `UPDATE employee SET role_id = ${role_id} WHERE id = ${employee_id}`,
+            (err, results) => {
+              if (err) return err;
+              promptStarter();
+            }
+          );
+        });
     });
 }
