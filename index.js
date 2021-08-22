@@ -40,6 +40,7 @@ function promptStarter() {
           "Add Role?",
           "View all Departments",
           "Add Department?",
+          "Exit"
         ],
       },
     ])
@@ -72,6 +73,10 @@ function promptStarter() {
 
         case "Add Department?":
           addDepartment();
+          break;
+
+        case "Exit":
+          dbConnection.end();
           break;
       }
     });
