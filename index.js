@@ -219,3 +219,17 @@ function updateEmployeeRole() {
         });
     });
 }
+
+
+function viewAllRoles() {
+  dbConnection.query(
+    "SELECT role.id, role.title, role.salary FROM role",
+    (err, results) => {
+      if (err) {
+        throw err;
+      }
+      console.table(results);
+      promptStarter();
+    }
+  );
+}
