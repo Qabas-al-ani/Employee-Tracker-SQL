@@ -45,7 +45,7 @@ function promptStarter() {
       },
     ])
     .then(value => {
-      // check if the question matches then call the function
+  // check if the question matches then call the function
       switch (value.choice) {
         case "View All Employees?":
           viewAllEmployees();
@@ -74,9 +74,10 @@ function promptStarter() {
         case "Add Department?":
           addDepartment();
           break;
-
+        // added Exit function
         case "Exit":
           dbConnection.end();
+          console.log('See you later!')
           break;
       }
     });
@@ -101,6 +102,7 @@ function addEmployee() {
   let managerArray = [];
   let roleArray = [];
 
+  // adding first and last name to the new manager of his branch
   dbConnection.query(
     "SELECT first_name, last_name FROM employee WHERE manager_id IS NULL",
     (err, results) => {
@@ -111,6 +113,7 @@ function addEmployee() {
     }
   );
 
+  // to select all roles in the table
   dbConnection.query("SELECT * FROM role ", (err, results) => {
     if (err) throw err;
     results.map(role => roleArray.push(`${role.title}`));
@@ -146,6 +149,7 @@ function addEmployee() {
       const role_id = roleArray.indexOf(results.role) + 1;
       const manager_id = managerArray.indexOf(results.manager) + 1;
 
+      //  create a variable for new employees
       const newEmployee = {
         first_name: results.first_name,
         last_name: results.last_name,
@@ -153,14 +157,15 @@ function addEmployee() {
         role_id: role_id,
       };
 
+      // function to insert new employee to the database
       dbConnection.query("INSERT INTO employee SET ?", newEmployee, err => {
         if (err) throw err;
-
-        promptStarter();
+promptStarter();
       });
     });
 }
 
+// function to update Employee Role for each with their role salary and departments
 function updateEmployeeRole() {
   let employeeArray = [];
   let roleArray = [];
@@ -213,7 +218,7 @@ function updateEmployeeRole() {
               employee_id = employees[i].id;
             }
           }
-
+          // to update role values
           dbConnection.query(
             `UPDATE employee SET role_id = ${role_id} WHERE id = ${employee_id}`,
             (err, results) => {
@@ -224,7 +229,7 @@ function updateEmployeeRole() {
         });
     });
 }
-
+//  function to view All Roles for id, title and salary and log it to the data base
 function viewAllRoles() {
   dbConnection.query(
     "SELECT role.id, role.title, role.salary FROM role",
@@ -237,7 +242,7 @@ function viewAllRoles() {
     }
   );
 }
-
+//  function add Role with prompts for department and salary 
 function addRole() {
   let departmentArray = [];
 
@@ -280,7 +285,7 @@ function addRole() {
               department_id = results[i].id;
             }
           }
-
+          // insert  in to department the salary and the id 
           dbConnection.query(
             `INSERT INTO role (title, salary, department_id) VALUES ("${answer.role}", ${answer.salary}, ${department_id})`,
             (err, res) => {
@@ -292,7 +297,7 @@ function addRole() {
         });
     });
 }
-
+//  function to view All Departments in table
 function viewAllDepartments() {
   dbConnection.query(
     "SELECT department.id, department.name AS 'department name' FROM department",
@@ -305,7 +310,7 @@ function viewAllDepartments() {
     }
   );
 }
-
+//  function to add Department if needed
 function addDepartment() {
   inquirer
     .prompt([
