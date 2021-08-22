@@ -300,3 +300,23 @@ function viewAllDepartments() {
     }
   );
 }
+
+function addDepartment() {
+  inquirer
+    .prompt([
+      {
+        name: "department",
+        type: "input",
+        message: "what is the name of the department?",
+      },
+    ])
+    .then(answer => {
+      dbConnection.query(
+        `INSERT INTO department (name) VALUES ("${answer.department}")`,
+        (err, results) => {
+          if (err) throw err;
+          promptStarter();
+        }
+      );
+    });
+}
