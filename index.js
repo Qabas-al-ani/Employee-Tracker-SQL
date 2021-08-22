@@ -2,7 +2,7 @@
 const inquirer = require("inquirer");
 const mysql = require("mysql2");
 const consoleTable = require("console.table");
-const promisemysql = require("promise-mysql");
+const promiseMySql = require("promise-mysql");
 
 const connectionProperties = {
   host: "localhost",
@@ -160,7 +160,7 @@ function updateEmployeeRole() {
   let employeeArray = [];
   let roleArray = [];
 
-  promisemysql
+  promiseMySql
     .createConnection(connectionProperties)
     .then(conn => {
       return Promise.all([
@@ -220,7 +220,6 @@ function updateEmployeeRole() {
     });
 }
 
-
 function viewAllRoles() {
   dbConnection.query(
     "SELECT role.id, role.title, role.salary FROM role",
@@ -232,4 +231,59 @@ function viewAllRoles() {
       promptStarter();
     }
   );
+}
+
+function addRole() {
+  let departmentArray = [];
+
+  promiseMySql
+    .createConnection(connectionProperties)
+    .then(conn => {
+      return conn.query(
+        "SELECT department.id, department.name FROM department"
+      );
+    })
+    .then(results => {
+      results.map(result => departmentArray.push(result.name));
+      return results;
+    })
+    .then(results => {
+      inquirer
+        .prompt([
+          {
+            name: "role",
+            type: "input",
+            message: "what is the name of the department?",
+          },
+          {
+            name: "salary",
+            type: "number",
+            message: "what is salary of the role?",
+          },
+          {
+            name: "department",
+            type: "list",
+            message: "which department does the role belong to?",
+            choices: departmentArray,
+          },
+        ])
+        .then(answer => {
+          let department_id;
+
+          for (let i = 0; i < results.length; i++) {
+            if (answer.department == results[i].name) {
+              department_id = results[i].id;
+            }
+          }
+
+          dbConnection.query(
+            `INSERT INTO role (title, salary, department_id) VALUES ("${answer.role}", ${answer.salary}, ${department_id})`,
+            (err, res) => {
+              if (err) throw err;
+
+              promptStarter();
+            }
+          );
+        });
+    });
 }
