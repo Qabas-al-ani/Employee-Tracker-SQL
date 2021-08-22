@@ -148,52 +148,59 @@ function addEmployee() {
 
       dbConnection.query("INSERT INTO employee SET ?", newEmployee, err => {
         if (err) throw err;
-        console.table(results);
+
         promptStarter();
       });
     });
 }
 
-// dbConnection.query(
-//   "SELECT employee.first_name, employee.last_name, role.title FROM employee JOIN role ON employee.role_id = role.id",
-//   (err, results) => {
-//     if (err) throw err;
-
 function updateEmployeeRole() {
-  
   let employeeArray = [];
   let roleArray = [];
 
+  dbConnection.query(
+    "SELECT first_name, last_name FROM employee;",
 
-
-
-
+    (err, results) => {
+      results.map(employee => {
+       
+        employeeArray.push(`${employee.first_name} ${employee.last_name}`);
+      });
+     
+      return employeeArray;
+    }
+  );
 
   dbConnection.query("SELECT * FROM role ", (err, results) => {
     if (err) throw err;
     results.map(role => roleArray.push(`${role.title}`));
     return roleArray;
   });
-
-
-  inquirer.prompt([
-    {
-      name: "employeeName",
-      type: "rawList",
-      choices: () => {
-        const employeeNames = [];
-        results.map(employee =>
-          employeeNames.push(`${employee.first_name} ${employee.last_name}`)
-        );
-        return employeeNames;
+  console.log(employeeArray);
+  inquirer
+    .prompt([
+      {
+        name: "employeeName",
+        type: "rawList",
+        choices: employeeArray,
+        message: "which employee's role do you want to update?",
       },
-      message: "which employee's role do you want to update?",
-    },
-    {
-      name: "role",
-      type: "rawList",
-      message: "what is the employee's new title?",
-      choices: rol,
-    },
-  ]);
+      {
+        name: "role",
+        type: "rawList",
+        message: "which role do you want to assign the selected employee?",
+        choices: roleArray,
+      },
+    ])
+    .then(([role, employeeName]) => {
+      let last_name = employeeName.split(" ")[0];
+      dbConnection.query(
+        `UPDATE employee SET role = ${role} WHERE last_name = ${last_name}`,
+        err => {
+          if (err) throw err;
+
+          promptStarter();
+        }
+      );
+    });
 }
