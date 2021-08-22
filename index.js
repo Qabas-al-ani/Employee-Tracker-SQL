@@ -3,6 +3,8 @@ const inquirer = require("inquirer");
 const mysql = require("mysql2");
 const consoleTable = require("console.table");
 const promiseMySql = require("promise-mysql");
+var figlet = require('figlet');
+
 
 const connectionProperties = {
   host: "localhost",
@@ -11,6 +13,27 @@ const connectionProperties = {
   password: "0000",
   database: "employee_db",
 };
+
+
+//  added two figlet functions to separate the manager employee
+figlet('  E m p l o y e e  ', function(err, data) {
+    if (err) {
+        console.log('Something went wrong...');
+        console.dir(err);
+        return;
+    }
+    console.log(data)
+});
+
+figlet('   M a n a g e r  ', function(err, data) {
+  if (err) {
+      console.log('Something went wrong...');
+      console.dir(err);
+      return;
+  }
+  console.log(data)
+});
+
 
 // create connection to the local database
 const dbConnection = mysql.createConnection(connectionProperties);
